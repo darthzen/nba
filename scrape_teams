@@ -1,0 +1,51 @@
+#!/usr/bin/env python2
+import os,sys
+import re,requests,urllib
+
+from bs4 import BeautifulSoup
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "nbatrader.settings")
+from django.core.management import execute_from_command_line
+
+import django
+django.setup()
+
+from trader.models import Team
+
+logo_domain = "http://www.sportslogos.net"
+
+def scrape():
+    def scrapeLogo(team_url):
+        logo_soup = BeautifulSoup(requests.get(team_url).text, 'lxml')
+        logos_li = logo_soup.find("ul", class_="logoWall").find_all("li")
+        last_li = None
+        for last_li in logos_li:pass
+        if last_li:
+            logo_li = last_li
+        logo_url = last_li.find_all("a")[-1].get("href")
+        logo_soup = BeautifulSoup(requests.get("{}/{}".format(logo_domain,logo_url)).text,"lxml")
+        logo_url = logo_soup.find("div", id="mainLogo").find("img").get("src")
+        return logo_url
+
+    url = "{}/teams/list_by_league/6/National_Basketball_Association/NBA/logos/".format(logo_domain)
+    soup = BeautifulSoup(requests.get(url).text, 'lxml')
+    
+    for team_find in soup.find(id="team").findAll("li"):
+        logo = scrapeLogo("{}/{}".format(logo_domain,team_find.a['href']))
+        team_text = team_find.find("a").contents[2].strip().rsplit(" ", 1)
+        team_name = team_text[-1]
+        team_location = team_text[0]
+
+        if team_name == "Blazers":
+            team_name = "Trail Blazers"
+            team_location = "Portland"
+        print "Processing {} {}...".format(team_location,team_name)
+        logo_file = logo.split('/')[-1]
+        urllib.urlretrieve("{}/{}".format(logo_domain,logo),"images/logos/{}".format(logo_file))
+        team = Team(location=team_location,name=team_name,logo=logo_file)
+        team.save()
+
+
+
+if __name__ == "__main__":
+    scrape()

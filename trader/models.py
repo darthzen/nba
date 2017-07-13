@@ -8,9 +8,8 @@ class Team(models.Model):
 
     location = models.CharField(max_length=20)
     name = models.CharField(max_length=20)
-    abbv = models.CharField(max_length=3)
-    logo = models.ImageField(upload_to="logos/%Y/")
-    conference = models.CharField(max_length=4,choices=(('East','East'),('West','West')))
+    logo = models.ImageField(upload_to="logos/")
+    #conference = models.CharField(max_length=4,choices=(('East','East'),('West','West')))
 
 @python_2_unicode_compatible
 class Player(models.Model):
